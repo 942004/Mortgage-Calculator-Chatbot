@@ -1,47 +1,174 @@
-# Mortgage-Calculator-Chatbot
-# 🏡 Mortgage Chatbot
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🏡 Mortgage Chatbot</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: linear-gradient(-45deg, #74ebd5, #acb6e5, #d5dee7, #b8c6db);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
 
-A friendly web-based chatbot that helps users estimate their monthly mortgage payments using a loan amount, annual interest rate, and term duration in years.
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
 
-## 🌟 Features
+    .chat-container {
+      background-color: white;
+      width: 400px;
+      height: 600px;
+      border-radius: 20px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
 
-- Simple and interactive chatbot interface
-- Calculates monthly mortgage payments
-- Smooth animated gradient background
-- Mobile-responsive design
-- Clean and user-friendly UI
+    .chat-header {
+      background-color: #00796B;
+      color: white;
+      padding: 16px;
+      font-size: 1.2em;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
-## 📦 Technologies Used
+    .chat-messages {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+    }
 
-- HTML5
-- CSS3 (with animations)
-- JavaScript (Vanilla)
+    .message {
+      padding: 12px;
+      border-radius: 12px;
+      margin-bottom: 10px;
+      max-width: 80%;
+    }
 
-## 🚀 Getting Started
+    .bot {
+      background-color: #e0f7fa;
+      align-self: flex-start;
+    }
 
-### 📁 Clone the Repository
+    .user {
+      background-color: #dcedc8;
+      align-self: flex-end;
+    }
 
-```bash
-git clone https://github.com/942004/mortgage-chatbot.git
-cd mortgage-chatbot
+    .chat-input {
+      display: flex;
+      padding: 12px;
+      border-top: 1px solid #ccc;
+      background-color: #f7f7f7;
+    }
 
+    .chat-input input {
+      flex: 1;
+      padding: 10px;
+      border-radius: 20px;
+      border: 1px solid #ccc;
+      outline: none;
+    }
 
-*Run the App*
-open index.html
+    .chat-input button {
+      margin-left: 10px;
+      padding: 10px 16px;
+      background-color: #00796B;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-header">
+      🏡 Mortgage Chatbot
+    </div>
+    <div class="chat-messages" id="chat">
+      <div class="message bot">👋 Hi! I'm your mortgage bot. What's the loan amount?</div>
+    </div>
+    <div class="chat-input">
+      <input type="text" id="userInput" placeholder="Type here..." />
+      <button onclick="handleInput()">Send</button>
+    </div>
+  </div>
 
-🧮 How It Works
-The bot prompts the user to enter a loan amount in ₹.
+  <script>
+    const chat = document.getElementById("chat");
+    const userInput = document.getElementById("userInput");
 
-Then it asks for the annual interest rate (e.g., 7.5).
+    let state = 0;
+    let loanAmount = 0, interestRate = 0, termYears = 0;
 
-Next, it requests the loan term in years (e.g., 20).
+    function appendMessage(text, sender) {
+      const msg = document.createElement("div");
+      msg.className = `message ${sender}`;
+      msg.innerText = text;
+      chat.appendChild(msg);
+      chat.scrollTop = chat.scrollHeight;
+    }
 
-Based on the input, it calculates the monthly payment using the formula:
+    function handleInput() {
+      const input = userInput.value.trim();
+      if (!input) return;
 
-M = (P * r) / (1 - (1 + r)^-n)
+      appendMessage(input, "user");
 
-Where:
-- M = Monthly Payment
-- P = Loan Amount
-- r = Monthly Interest Rate (annual rate / 12 / 100)
-- n = Number of Payments (years * 12)
+      if (state === 0) {
+        loanAmount = parseFloat(input);
+        if (isNaN(loanAmount) || loanAmount <= 0) {
+          appendMessage("❌ Please enter a valid loan amount in ₹.", "bot");
+          return;
+        }
+        appendMessage("💰 Great! Now enter the annual interest rate (e.g., 7.5)", "bot");
+        state = 1;
+      } else if (state === 1) {
+        interestRate = parseFloat(input);
+        if (isNaN(interestRate) || interestRate <= 0) {
+          appendMessage("❌ Please enter a valid interest rate.", "bot");
+          return;
+        }
+        appendMessage("📅 Got it! Now enter the loan term in years (e.g., 20)", "bot");
+        state = 2;
+      } else if (state === 2) {
+        termYears = parseInt(input);
+        if (isNaN(termYears) || termYears <= 0) {
+          appendMessage("❌ Please enter a valid number of years.", "bot");
+          return;
+        }
+
+        const r = interestRate / 100 / 12;
+        const n = termYears * 12;
+        const monthly = (loanAmount * r) / (1 - Math.pow(1 + r, -n));
+        const rounded = monthly.toFixed(2);
+        appendMessage(`📊 Your estimated monthly payment is ₹${rounded}`, "bot");
+        appendMessage("🎯 Thank you! Type a new amount to start again.", "bot");
+        state = 0;
+      }
+
+      userInput.value = "";
+    }
+
+    userInput.addEventListener("keypress", function(e) {
+      if (e.key === "Enter") handleInput();
+    });
+  </script>
+</body>
+</html>
+
